@@ -43,7 +43,7 @@ The main objectives of btg-devops are:
 | Command | Version | Purpose |
 |---|---|---|
 | `btg-devops analyze [module]` | v0.12.0 | Run a best-practice audit for one specific resource type |
-| `btg-devops analyze all` | v0.13.0 | Run all 12 analyzers in one command and produce a combined audit report |
+| `btg-devops analyze all` | v0.14.0 | Run all 12 analyzers in one command and produce a combined audit report |
 | `btg-devops analyze cost` | v0.14.0 | Query Azure Cost Management API and show billing data, spend by service, and top 15 highest-cost resources |
 
 **Module list for `btg-devops analyze [module]`:**

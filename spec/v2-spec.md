@@ -123,7 +123,78 @@ git tag v0.13.0 && git push origin v0.13.0
 
 Triggers `release.yml` — builds and publishes cross-platform binaries automatically.
 
-### 7. HTTP API Server — `cmd/server.go`
+### 6. Release Tag — `v0.13.0`
+
+```bash
+git tag v0.13.0 && git push origin v0.13.0
+```
+
+Triggers `release.yml` — builds and publishes cross-platform binaries automatically.
+
+### 7. Full Subscription Audit — `btg-devops analyze all`
+
+**Feature 013 — Version: v0.13.0**
+
+Runs all 12 resource analyzers in one single command instead of running each one separately. Produces a combined audit report for the entire Azure subscription.
+
+**Entry point:** `cmd/analyze_all.go`
+
+**Commands:**
+```bash
+# Run all 12 analyzers — table output
+btg-devops analyze all
+
+# Run all and get one combined JSON
+btg-devops analyze all --output json
+
+# Filter all analyzers to one resource group
+btg-devops analyze all --resource-group my-rg
+```
+
+**Azure Permission Required:** Reader role on the subscription
+
+**Acceptance Criteria:**
+- [ ] `btg-devops analyze all` runs all 12 analyzers in sequence
+- [ ] Output combines findings from all modules into one table or JSON
+- [ ] `--resource-group` flag scopes all 12 analyzers to one resource group
+- [ ] `--output json` produces a valid combined JSON array
+
+### 8. Subscription Cost Report — `btg-devops analyze cost`
+
+**Feature 014 — Version: v0.14.0**
+
+Queries the Azure Cost Management API to show actual billing data for the subscription. Displays total spend, cost broken down by service, and the top 15 highest-cost individual resources for a given time period.
+
+**Entry point:** `cmd/analyze_cost.go`
+
+**Commands:**
+```bash
+# Last 30 days — table output (default)
+btg-devops analyze cost
+
+# Last 7 days
+btg-devops analyze cost --days 7
+
+# Last 90 days
+btg-devops analyze cost --days 90
+
+# Filter to one resource group
+btg-devops analyze cost --resource-group my-rg
+
+# JSON output
+btg-devops analyze cost --output json
+```
+
+**Azure Permission Required:** Cost Management Reader role on the subscription
+
+**Acceptance Criteria:**
+- [ ] `btg-devops analyze cost` returns real billing data from Azure Cost Management API
+- [ ] Output shows total spend, cost by service, and top 15 highest-cost resources
+- [ ] `--days` flag controls the time period (default 30)
+- [ ] `--output json` produces valid structured JSON
+- [ ] Missing Cost Management permissions produces a clear error message
+
+### 9. HTTP API Server — `cmd/server.go`
 
 A new Go HTTP server added to the existing binary. Exposes one REST endpoint per analyzer module so the Next.js Dashboard can trigger live audits directly — no CLI required.
 
@@ -135,7 +206,7 @@ A new Go HTTP server added to the existing binary. Exposes one REST endpoint per
 
 **Authentication:** Same four Azure env vars as the CLI. No new credentials needed.
 
-### 8. MCP Server — `cmd/mcp.go`
+### 10. MCP Server — `cmd/mcp.go`
 
 btg-devops is registered as an MCP server exposing all 12 analyzers as individually callable tools. Used exclusively by the Dashboard Agent Mode — the dashboard sends a user prompt to Claude Agent, which then calls the appropriate MCP tools.
 
@@ -145,7 +216,7 @@ btg-devops is registered as an MCP server exposing all 12 analyzers as individua
 
 **Used by:** Dashboard Agent Mode only. The CLI path does not use MCP.
 
-### 9. Next.js Dashboard — Two Modes
+### 11. Next.js Dashboard — Two Modes
 
 A single-page web application that gives non-CLI users a visual interface to run and view Azure audits in real time. The dashboard has two distinct modes — both call the live system, neither requires a file upload.
 
@@ -189,18 +260,20 @@ Claude explains findings in plain English → Dashboard displays AI response
 ## Task Order
 
 ```
-Step 1  → Write unit tests (start with iam_test.go)
-Step 2  → Wire CI pipeline (ci.yml)
+Step 1  → Write unit tests          (start with iam_test.go)
+Step 2  → Wire CI pipeline          (.github/workflows/ci.yml)
 Step 3  → Write CHANGELOG.md
 Step 4  → Write CONTRIBUTING.md
 Step 5  → Verify docs/ folder
-Step 6  → Merge all → tag v0.13.0
-Step 7  → Build HTTP API Server (cmd/server.go + REST endpoints)
-Step 8  → Build MCP Server (cmd/mcp.go + wire 12 tools)
-Step 9  → Scaffold Next.js Dashboard
-Step 10 → Build Normal Mode (calls HTTP API Server, renders findings)
-Step 11 → Build Agent Mode (sends prompt to Claude Agent via MCP)
-Step 12 → Deploy Dashboard to Vercel
+Step 6  → Tag v0.13.0              (triggers cross-platform release)
+Step 7  → Build analyze all        (cmd/analyze_all.go)
+Step 8  → Build analyze cost       (cmd/analyze_cost.go)
+Step 9  → Build HTTP API Server    (cmd/server.go + REST endpoints)
+Step 10 → Build MCP Server         (cmd/mcp.go + wire 12 tools)
+Step 11 → Scaffold Next.js Dashboard
+Step 12 → Build Normal Mode        (calls HTTP API Server)
+Step 13 → Build Agent Mode         (Claude Agent + MCP)
+Step 14 → Deploy Dashboard to Vercel
 ```
 
 ---
@@ -214,6 +287,10 @@ Step 12 → Deploy Dashboard to Vercel
 - [ ] `CONTRIBUTING.md` covers build, test, lint, PR checklist, and release steps
 - [ ] All `docs/` links are valid and spec content matches the code
 - [ ] `v0.13.0` tag is pushed and GitHub Releases contains cross-platform binaries
+- [ ] `btg-devops analyze all` runs all 12 analyzers and produces a combined report
+- [ ] `btg-devops analyze all --output json` produces a valid combined JSON array
+- [ ] `btg-devops analyze cost` returns real billing data from Azure Cost Management API
+- [ ] `btg-devops analyze cost --days 7` correctly scopes the time period
 - [ ] `GET /analyze/{module}` returns live findings as JSON for all 12 modules
 - [ ] All 12 analyzers are callable as MCP tools via stdio transport
 - [ ] Dashboard Normal Mode fetches live findings from HTTP API Server and renders them
